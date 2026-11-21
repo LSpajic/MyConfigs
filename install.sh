@@ -34,7 +34,9 @@ declare -A DEPS=(
   [vscode]="code"
   [gh]="gh"
   [glow]="glow::glow"
-  [scripts]="nmcli:network-manager bluetoothctl:bluez pactl:pulseaudio-utils playerctl notify-send:libnotify-bin flock:util-linux"
+  [scripts]="nmcli:network-manager bluetoothctl:bluez pactl:pulseaudio-utils playerctl notify-send:libnotify-bin flock:util-linux xterm xdotool vdirsyncer khal"
+  [vdirsyncer]="vdirsyncer"
+  [khal]="khal"
 )
 # apt has no package for these -> brew only (or manual)
 declare -A NO_APT=([glow]=1 [code]=1)

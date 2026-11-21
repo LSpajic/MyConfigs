@@ -1,0 +1,25 @@
+# Calendars synced by vdirsyncer (see ~/.config/vdirsyncer/config)
+[calendars]
+  [[google]]
+    path = ~/.local/share/calendars/google/
+    color = yellow
+    readonly = True
+  [[fer]]
+    path = ~/.local/share/calendars/fer/
+    color = light cyan
+    readonly = True
+
+[locale]
+firstweekday = 0
+timeformat = %H:%M
+dateformat = %d.%m.
+longdateformat = %d.%m.%Y.
+datetimeformat = %d.%m. %H:%M
+longdatetimeformat = %d.%m.%Y. %H:%M
+
+[default]
+highlight_event_days = True
+timedelta = 7d
+
+[highlight_days]
+color = yellow

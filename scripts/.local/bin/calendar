@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Drop-down calendar: month view + Google Calendar events (khal, synced by vdirsyncer).
+# Toggle: run again (or press q inside) to close. Bound to $mod+c and right click on the clock.
+
+CLASS="khalcal"
+
+if xdotool search --classname "^$CLASS\$" >/dev/null 2>&1; then
+  i3-msg "[instance=\"$CLASS\"] kill" >/dev/null
+  exit 0
+fi
+
+if ! command -v ikhal >/dev/null || ! command -v vdirsyncer >/dev/null; then
+  notify-send -u critical "Calendar" "khal / vdirsyncer not installed:\nsudo apt install khal vdirsyncer"
+  exit 1
+fi
+# calendar dir -> vdirsyncer pair (see ~/.config/vdirsyncer/config; secret URLs live in
+# ~/.local/share/vdirsyncer/<pair>-url, outside the repo)
+declare -A PAIRS=([google]=gcal [fer]=fer)
+NEW=()
+for dir in "${!PAIRS[@]}"; do
+  pair=${PAIRS[$dir]}
+  if [ ! -s "$HOME/.local/share/vdirsyncer/$pair-url" ]; then
+    notify-send -u critical "Calendar" "Missing secret iCal URL for '$pair'.\nPut it in ~/.local/share/vdirsyncer/$pair-url"
+    exit 1
+  fi
+  [ -d "$HOME/.local/share/calendars/$dir" ] || { mkdir -p "$HOME/.local/share/calendars/$dir"; NEW+=("$pair"); }
+done
+
+if [ ${#NEW[@]} -gt 0 ]; then
+  # first run for these calendars: set them up and do the initial sync before opening
+  notify-send "Calendar" "First sync: ${NEW[*]}…"
+  if ! { vdirsyncer discover "${NEW[@]}" </dev/null && vdirsyncer sync; } >/tmp/calendar-sync.log 2>&1; then
+    notify-send -u critical "Calendar" "Sync failed - see /tmp/calendar-sync.log"
+    exit 1
+  fi
+else
+  # refresh in the background so the newest events show up shortly after opening
+  vdirsyncer sync >/dev/null 2>&1 &
+fi
+
+# xterm because it can set its own WM class (gnome-terminal can't), styled gruvbox
+exec xterm -name "$CLASS" -T "Calendar" \
+  -fa "JetBrains Mono" -fs 11 -b 12 \
+  -bg "#282828" -fg "#ebdbb2" -cr "#d79921" \
+  -xrm 'XTerm*color0:#282828'  -xrm 'XTerm*color8:#928374'  \
+  -xrm 'XTerm*color1:#cc241d'  -xrm 'XTerm*color9:#fb4934'  \
+  -xrm 'XTerm*color2:#98971a'  -xrm 'XTerm*color10:#b8bb26' \
+  -xrm 'XTerm*color3:#d79921'  -xrm 'XTerm*color11:#fabd2f' \
+  -xrm 'XTerm*color4:#458588'  -xrm 'XTerm*color12:#83a598' \
+  -xrm 'XTerm*color5:#b16286'  -xrm 'XTerm*color13:#d3869b' \
+  -xrm 'XTerm*color6:#689d6a'  -xrm 'XTerm*color14:#8ec07c' \
+  -xrm 'XTerm*color7:#a89984'  -xrm 'XTerm*color15:#ebdbb2' \
+  -e ikhal
