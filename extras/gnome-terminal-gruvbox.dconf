@@ -1,0 +1,21 @@
+[/]
+visible-name='Gruvbox'
+use-theme-colors=false
+background-color='#282828'
+foreground-color='#ebdbb2'
+bold-color-same-as-fg=true
+cursor-colors-set=true
+cursor-background-color='#d79921'
+cursor-foreground-color='#282828'
+highlight-colors-set=true
+highlight-background-color='#504945'
+highlight-foreground-color='#ebdbb2'
+palette=['#282828', '#cc241d', '#98971a', '#d79921', '#458588', '#b16286', '#689d6a', '#a89984', '#928374', '#fb4934', '#b8bb26', '#fabd2f', '#83a598', '#d3869b', '#8ec07c', '#ebdbb2']
+bold-is-bright=false
+use-system-font=false
+font='JetBrains Mono 12'
+cursor-shape='ibeam'
+audible-bell=false
+scrollbar-policy='never'
+default-size-columns=100
+default-size-rows=28

@@ -6,7 +6,7 @@ Each top-level folder is a **stow package** that mirrors `$HOME`:
 
 | package     | what                                                  |
 |-------------|-------------------------------------------------------|
-| `zsh`       | `.zshrc`, `.zprofile` (oh-my-zsh, sdkman, nvm, brew, android) |
+| `zsh`       | `.zshrc`, `.zprofile` — gruvbox prompt, autosuggestions, syntax highlighting, fzf; also loads the Gruvbox gnome-terminal profile from `extras/` |
 | `bash`      | `.bashrc`, `.profile`                                 |
 | `git`       | `.gitconfig` (uses `gh` as credential helper)         |
 | `i3`        | `~/.config/i3/config`                                 |

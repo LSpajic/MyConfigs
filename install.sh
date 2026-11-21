@@ -105,6 +105,10 @@ done
 EXTRA_MISSING=()
 if [[ " ${PKGS[*]} " == *" zsh "* ]]; then
   if [ -d "$HOME/.oh-my-zsh" ]; then ok "oh-my-zsh"; else err "oh-my-zsh  (missing)"; EXTRA_MISSING+=(ohmyzsh); fi
+  for pl in zsh-autosuggestions zsh-syntax-highlighting; do
+    if [ -d "$HOME/.oh-my-zsh/custom/plugins/$pl" ]; then ok "$pl"
+    else err "$pl  (missing)"; EXTRA_MISSING+=("zplug:$pl"); fi
+  done
   for opt in "$HOME/.sdkman:sdkman" "$HOME/.nvm:nvm" "/home/linuxbrew/.linuxbrew:homebrew"; do
     [ -e "${opt%%:*}" ] && ok "${opt##*:} (optional)" || warn "${opt##*:} not installed (optional, .zshrc skips it)"
   done
@@ -125,6 +129,8 @@ if [ $CHECK -eq 0 ] && [ $UNSTOW -eq 0 ]; then
     case $x in
       ohmyzsh) confirm "Install oh-my-zsh?" && \
         RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" ;;
+      zplug:*) pl=${x#zplug:}; confirm "Install $pl (oh-my-zsh plugin)?" && \
+        git clone -q --depth 1 "https://github.com/zsh-users/$pl" "$HOME/.oh-my-zsh/custom/plugins/$pl" && ok "$pl installed" ;;
       font) if confirm "Download FiraCode Nerd Font to ~/.local/share/fonts?"; then
           tmp=$(mktemp -d)
           curl -fL -o "$tmp/f.zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip \
@@ -171,6 +177,24 @@ for p in "${PKGS[@]}"; do
   [ $CHECK -eq 1 ] && continue
   if stow --no-folding -R -d "$REPO" -t "$TARGET" "$p"; then ok "$p"; else err "$p failed"; fi
 done
+
+# ---------------------------------------------------------------- 4. gnome-terminal colours
+# Gruvbox profile (extras/gnome-terminal-gruvbox.dconf), made the default profile
+GT_UUID=6c0a1f2e-9b7d-4c3a-8e5f-0d1e2f3a4b5c
+if [ $CHECK -eq 0 ] && [[ " ${PKGS[*]} " == *" zsh "* ]] && have gnome-terminal && have dconf; then
+  GT=/org/gnome/terminal/legacy/profiles:
+  dconf load "$GT/:$GT_UUID/" < "$REPO/extras/gnome-terminal-gruvbox.dconf"
+  list=$(dconf read "$GT/list")
+  if [ -z "$list" ] || [ "$list" = "@as []" ]; then
+    # no explicit list yet: keep every existing profile visible
+    list="[$(dconf list "$GT/" | sed -n 's|^:\(.*\)/$|\x27\1\x27|p' | paste -sd, - | sed 's/,/, /g')]"
+  fi
+  [[ "$list" == *"$GT_UUID"* ]] || list="${list%]}, '$GT_UUID']"
+  list=${list/\[, /[}
+  dconf write "$GT/list" "$list"
+  dconf write "$GT/default" "'$GT_UUID'"
+  ok "gnome-terminal: Gruvbox profile set as default"
+fi
 
 [ -d "$BACKUP" ] && info "Old files were saved to $BACKUP"
 [ $CHECK -eq 1 ] && info "Check done (nothing was changed)" || info "Done. Restart your shell / reload i3 (Mod4+Shift+r)."
