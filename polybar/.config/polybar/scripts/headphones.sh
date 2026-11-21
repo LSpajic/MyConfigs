@@ -21,9 +21,9 @@ pct=$(sed -n 's/.*Battery Percentage:.*(\([0-9]*\)).*/\1/p' <<<"$info")
 if [ -z "$pct" ]; then
   echo "$ICON"
 elif [ "$pct" -le 15 ]; then
-  printf "%%{F$ALERT}$ICON %3s%%{F-}%%\n" "$pct"
+  printf "%%{F$ALERT}$ICON %2s%%{F-}%%\n" "$pct"
 elif [ "$pct" -le 30 ]; then
-  printf "%%{F$WARN}$ICON%%{F-} %3s%%\n" "$pct"
+  printf "%%{F$WARN}$ICON%%{F-} %2s%%\n" "$pct"
 else
-  printf "$ICON %3s%%\n" "$pct"
+  printf "$ICON %2s%%\n" "$pct"
 fi
