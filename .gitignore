@@ -1,0 +1,4 @@
+# never commit secrets / machine state
+.config/gh/hosts.yml
+*.log
+.DS_Store

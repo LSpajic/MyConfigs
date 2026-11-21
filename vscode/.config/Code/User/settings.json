@@ -1,0 +1,22 @@
+{
+    "editor.fontSize": 21.5,
+    "editor.tabSize": 3,
+    "git.allowForcePush": true,
+    "git.enableSmartCommit": true,
+    "git.autofetch": true,
+    "workbench.colorTheme": "Light+",
+    "editor.autoIndent": "advanced",
+    "editor.suggestOnTriggerCharacters": false,
+    "terminal.integrated.suggest.suggestOnTriggerCharacters": false,
+    "git.ignoreRebaseWarning": true,
+    "git.confirmSync": false,
+    "editor.formatOnPaste": true,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "latex-workshop.latex.autoBuild.cleanAndRetry.enabled": false,
+    "latex-workshop.latex.autoBuild.run": "never",
+    "editor.wordWrap": "on",
+    "chat.viewSessions.orientation": "stacked",
+    "chat.tools.terminal.autoApprove": {
+        "make": true
+    }
+}
