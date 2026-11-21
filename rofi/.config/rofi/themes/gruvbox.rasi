@@ -1,0 +1,132 @@
+/* gruvbox — rofi theme matching i3 / polybar / zsh / login screen */
+
+* {
+    bg0:    #282828;
+    bg1:    #3c3836;
+    bg2:    #504945;
+    fg:     #ebdbb2;
+    gray:   #928374;
+    green:  #689d6a;
+    aqua:   #458588;
+    yellow: #d79921;
+    yellowb:#fabd2f;
+    red:    #cc241d;
+    greenb: #b8bb26;
+
+    font:             "JetBrains Mono 12";
+    background-color: transparent;
+    text-color:       @fg;
+    margin:  0;
+    padding: 0;
+    spacing: 0;
+}
+
+window {
+    location:         center;
+    width:            560px;
+    background-color: @bg0;
+    border:           1px;
+    border-color:     @bg1;
+    border-radius:    6px;
+}
+
+/* the four wallpaper stripes on top, like the login card */
+mainbox {
+    children: [ "textbox-s1", "textbox-s2", "textbox-s3", "textbox-s4", "content" ];
+}
+textbox-s1, textbox-s2, textbox-s3, textbox-s4 {
+    expand:  false;
+    str:     "";
+    font:    "JetBrains Mono 1";
+    padding: 2px 0;
+}
+textbox-s1 { background-color: @green;  }
+textbox-s2 { background-color: @aqua;   }
+textbox-s3 { background-color: @yellow; }
+textbox-s4 { background-color: @red;    }
+
+content {
+    orientation: vertical;
+    children:    [ "inputbar", "message", "listview" ];   /* Shift+→ still switches drun/run */
+    padding:     20px 18px 16px 18px;
+    spacing:     12px;
+}
+
+/* input — flat, amber underline like the focused login field */
+inputbar {
+    children:         [ "prompt", "entry" ];
+    spacing:          10px;
+    padding:          10px 12px;
+    background-color: @bg1;
+    border:           0 0 2px 0;
+    border-color:     @yellow;
+    border-radius:    4px 4px 0 0;
+}
+prompt {
+    text-color: @greenb;          /* same ❯ as the zsh prompt */
+    font:       "JetBrains Mono Bold 12";
+}
+entry {
+    placeholder:       "Search…";
+    placeholder-color: @gray;
+    cursor:            text;
+}
+
+message {
+    padding:          8px 12px;
+    background-color: @bg1;
+    border-radius:    4px;
+}
+textbox { text-color: @fg; }
+
+listview {
+    lines:        8;
+    columns:      1;
+    fixed-height: false;
+    scrollbar:    false;
+    spacing:      2px;
+}
+
+element {
+    padding:       8px 12px;
+    spacing:       12px;
+    border:        0 0 0 3px;
+    border-color:  transparent;
+    border-radius: 0 4px 4px 0;
+}
+element normal.normal, element alternate.normal { text-color: @fg; }
+element normal.active, element alternate.active { text-color: @yellowb; }
+element normal.urgent, element alternate.urgent { text-color: @red; }
+
+/* selected: polybar-style amber marker */
+element selected.normal, element selected.active {
+    background-color: @bg1;
+    border-color:     @yellow;
+    text-color:       @yellowb;
+}
+element selected.urgent {
+    background-color: @red;
+    text-color:       @fg;
+}
+
+element-icon {
+    size:           1.2em;
+    vertical-align: 0.5;
+}
+element-text {
+    text-color:     inherit;
+    vertical-align: 0.5;
+    highlight:      bold underline;
+}
+
+mode-switcher { spacing: 6px; }
+button {
+    padding:          6px;
+    background-color: @bg1;
+    text-color:       @gray;
+    border-radius:    4px;
+}
+button selected {
+    background-color: @yellow;
+    text-color:       @bg0;
+}

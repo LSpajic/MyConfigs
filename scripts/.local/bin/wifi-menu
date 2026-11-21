@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# wifi-menu — pick a Wi-Fi network in rofi (uses the gruvbox rofi theme).
+# Opened by clicking the Wi-Fi item in polybar or with Mod4+n in i3.
+#   known network      -> connects with the saved profile
+#   open network       -> connects
+#   password network   -> asks for the password in rofi
+#   802.1X (eduroam)   -> use eduroamCon.sh (needs user + password profile)
+
+notify() { command -v notify-send >/dev/null && notify-send -a wifi -i network-wireless -t 3000 "Wi-Fi" "$*"; }
+menu()   { rofi -dmenu -i -no-custom -no-show-icons -format i -p "$1" -theme-str 'window { width: 520px; } listview { lines: 10; }'; }
+
+if ! command -v nmcli >/dev/null; then notify "nmcli not found"; exit 1; fi
+
+radio=$(nmcli -t radio wifi)
+
+# scan unless the user just wants to toggle the radio
+if [ "$radio" = "enabled" ]; then
+  # fields: IN-USE:SIGNAL:BARS:SECURITY:SSID (SSID last, may contain ':' as '\:')
+  mapfile -t raw < <(nmcli -t -f IN-USE,SIGNAL,BARS,SECURITY,SSID device wifi list --rescan auto 2>/dev/null \
+                     | sort -t: -k1,1r -k2,2nr)
+fi
+
+declare -A seen
+ssids=() secs=() lines=()
+for l in "${raw[@]}"; do
+  inuse=${l%%:*};   rest=${l#*:}
+  signal=${rest%%:*}; rest=${rest#*:}
+  bars=${rest%%:*};   rest=${rest#*:}
+  sec=${rest%%:*};    ssid=${rest#*:}
+  ssid=${ssid//\\:/:}
+  case "$sec" in
+    *802.1X*) short="802.1X" ;;
+    *WPA3*)   short="WPA3" ;;
+    *WPA2*)   short="WPA2" ;;
+    *WPA1*|*WPA*) short="WPA" ;;
+    *WEP*)    short="WEP" ;;
+    ""|--)    short="open" ;;
+    *)        short=${sec%% *} ;;
+  esac
+  [ -z "$ssid" ] && continue
+  [ -n "${seen[$ssid]}" ] && { [ "$inuse" = "*" ] && lines[${seen[$ssid]}]="● $(printf '%-26.26s' "$ssid") $bars  $short"; continue; }
+  seen[$ssid]=${#ssids[@]}
+  mark="  "; [ "$inuse" = "*" ] && mark="● "
+  ssids+=("$ssid"); secs+=("$sec")
+  lines+=("$mark$(printf '%-26.26s' "$ssid") $bars  $short")
+done
+
+n=${#ssids[@]}
+if [ "$radio" = "enabled" ]; then
+  actions=("↻  Rescan" "⏻  Turn Wi-Fi off" "⚙  Advanced (ronema)")
+else
+  actions=("⏻  Turn Wi-Fi on")
+fi
+
+choice=$(printf '%s\n' "${lines[@]}" "${actions[@]}" | menu "wifi")
+[ -z "$choice" ] && exit 0
+
+# ---- actions
+if [ "$choice" -ge "$n" ]; then
+  case "${actions[$((choice - n))]}" in
+    *Rescan*)   nmcli device wifi rescan 2>/dev/null; sleep 2; exec "$0" ;;
+    *off*)      nmcli radio wifi off && notify "Wi-Fi off" ;;
+    *on*)       nmcli radio wifi on && notify "Wi-Fi on — scanning…" && sleep 3 && exec "$0" ;;
+    *ronema*)   exec ronema ;;
+  esac
+  exit 0
+fi
+
+# ---- network
+ssid=${ssids[$choice]}
+sec=${secs[$choice]}
+
+had_profile=0
+if nmcli -t -f NAME connection show | grep -Fxq -- "$ssid"; then
+  had_profile=1
+  notify "Connecting to $ssid…"
+  if nmcli connection up id "$ssid" >/dev/null 2>&1; then notify "Connected to $ssid"; exit 0; fi
+  # saved profile failed (e.g. password changed) -> fall through and ask again
+  [[ "$sec" == *802.1X* ]] && { notify "Couldn't connect to $ssid"; exit 1; }
+fi
+
+if [[ "$sec" == *802.1X* ]]; then
+  notify "$ssid uses username + password (802.1X). Run eduroamCon.sh or use ronema."
+  exit 1
+fi
+
+if [ -z "$sec" ] || [ "$sec" = "--" ]; then
+  notify "Connecting to $ssid…"
+  nmcli device wifi connect "$ssid" >/dev/null 2>&1 && notify "Connected to $ssid" || notify "Couldn't connect to $ssid"
+  exit
+fi
+
+pass=$(rofi -dmenu -password -p "password" -l 0 -theme-str 'window { width: 520px; } entry { placeholder: "Password for '"${ssid//\"/}"'"; }' </dev/null)
+[ -z "$pass" ] && exit 0
+notify "Connecting to $ssid…"
+if nmcli device wifi connect "$ssid" password "$pass" >/dev/null 2>&1; then
+  notify "Connected to $ssid"
+else
+  # don't keep a newly created profile with a wrong password (never touch one you already had)
+  [ $had_profile -eq 0 ] && nmcli connection delete id "$ssid" >/dev/null 2>&1
+  notify "Couldn't connect to $ssid — wrong password?"
+fi

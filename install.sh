@@ -114,8 +114,8 @@ if [[ " ${PKGS[*]} " == *" zsh "* ]]; then
   done
 fi
 if [[ " ${PKGS[*]} " == *" rofi "* ]]; then
-  if have fc-list && fc-list | grep -qi 'FiraCode Nerd'; then ok "FiraCode Nerd Font"
-  else err "FiraCode Nerd Font  (missing)"; EXTRA_MISSING+=(font); fi
+  if have fc-list && fc-list | grep -qi 'JetBrains Mono'; then ok "JetBrains Mono font"
+  else err "JetBrains Mono font  (missing)"; EXTRA_MISSING+=(font); fi
 fi
 if [[ " ${PKGS[*]} " == *" ronema "* ]]; then
   have ronema && ok "ronema" || warn "ronema not found - install it manually (config is linked anyway)"
@@ -131,14 +131,8 @@ if [ $CHECK -eq 0 ] && [ $UNSTOW -eq 0 ]; then
         RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" ;;
       zplug:*) pl=${x#zplug:}; confirm "Install $pl (oh-my-zsh plugin)?" && \
         git clone -q --depth 1 "https://github.com/zsh-users/$pl" "$HOME/.oh-my-zsh/custom/plugins/$pl" && ok "$pl installed" ;;
-      font) if confirm "Download FiraCode Nerd Font to ~/.local/share/fonts?"; then
-          tmp=$(mktemp -d)
-          curl -fL -o "$tmp/f.zip" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip \
-            && mkdir -p "$HOME/.local/share/fonts/FiraCode" \
-            && unzip -oq "$tmp/f.zip" -d "$HOME/.local/share/fonts/FiraCode" && fc-cache -f >/dev/null \
-            && ok "font installed" || err "font install failed"
-          rm -rf "$tmp"
-        fi ;;
+      font) confirm "Install JetBrains Mono (used by rofi, polybar, i3, terminal, login screen)?" && \
+        install_pkgs "fc-list:fonts-jetbrains-mono:font-jetbrains-mono" ;;
     esac
   done
   if have zsh && [ "$(basename "${SHELL:-}")" != zsh ] && [[ " ${PKGS[*]} " == *" zsh "* ]]; then

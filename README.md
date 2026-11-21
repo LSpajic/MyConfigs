@@ -11,13 +11,13 @@ Each top-level folder is a **stow package** that mirrors `$HOME`:
 | `git`       | `.gitconfig` (uses `gh` as credential helper)         |
 | `i3`        | `~/.config/i3/config`                                 |
 | `polybar`   | bar config, `launch.sh`, volume/brightness/workspace scripts |
-| `rofi`      | rofi config + everforest theme                        |
+| `rofi`      | rofi config + gruvbox theme (`themes/gruvbox.rasi`)   |
 | `ronema`    | rofi network manager config, themes, icons            |
 | `x11`       | `.fehbg`                                              |
 | `wallpaper` | `~/Pictures/Wallpapers/wallpaper.jpg`                 |
 | `vscode`    | VS Code `settings.json`                               |
 | `gh`, `glow`| CLI configs                                           |
-| `scripts`   | `~/.local/bin/eduroamCon.sh` (asks for credentials), `headphones` (BT headphone switching, bound in i3) |
+| `scripts`   | `~/.local/bin/eduroamCon.sh` (asks for credentials), `headphones` (BT headphone switching, bound in i3), `wifi-menu` (rofi Wi-Fi picker: polybar click / Mod4+n) |
 
 ## Install
 
