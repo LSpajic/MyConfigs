@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# Bluetooth headphones helper (Sony WH-CH720N) for i3.
+#
+#   headphones toggle    connect if disconnected, else disconnect (frees them for the phone)
+#   headphones connect   connect + make them the default output + move playing audio there
+#   headphones disconnect  pause media, then disconnect
+#   headphones mic       switch between music (A2DP) and call mode with mic (HFP)
+#   headphones watch     background loop: pause media when they drop (e.g. phone took them),
+#                        route audio to them when they come back
+#   headphones status    print state (for scripts / polybar)
+#
+# Different headphones? export HEADPHONES_MAC=XX:XX:XX:XX:XX:XX
+
+MAC="${HEADPHONES_MAC:-A8:E6:E8:89:D3:73}"
+ID="${MAC//:/_}"
+SINK_PREFIX="bluez_output.$ID"
+CARD="bluez_card.$ID"
+ICON="audio-headphones"
+
+notify() { command -v notify-send >/dev/null && notify-send -a headphones -i "$ICON" -t 2500 "Headphones" "$*"; }
+
+connected() { bluetoothctl info "$MAC" 2>/dev/null | grep -q "Connected: yes"; }
+sink()      { pactl list short sinks | awk -v p="$SINK_PREFIX" 'index($2,p)==1{print $2; exit}'; }
+
+route_audio() {
+  # wait up to ~5s for PipeWire to create the sink
+  local s i
+  for i in $(seq 20); do s=$(sink); [ -n "$s" ] && break; sleep 0.25; done
+  [ -z "$s" ] && return 1
+  pactl set-default-sink "$s"
+  pactl list short sink-inputs | cut -f1 | while read -r in; do pactl move-sink-input "$in" "$s" 2>/dev/null; done
+}
+
+do_connect() {
+  if connected; then route_audio; notify "Already connected"; return; fi
+  bluetoothctl power on >/dev/null 2>&1
+  notify "Connecting…"
+  # if the phone holds them this fails; one retry after a short wait
+  if bluetoothctl connect "$MAC" >/dev/null 2>&1 || { sleep 2; bluetoothctl connect "$MAC" >/dev/null 2>&1; }; then
+    route_audio && notify "Connected — audio routed to headphones" || notify "Connected (no audio sink yet)"
+  else
+    notify "Couldn't connect — disconnect them from the phone first"
+    return 1
+  fi
+}
+
+do_disconnect() {
+  playerctl -a pause 2>/dev/null
+  bluetoothctl disconnect "$MAC" >/dev/null 2>&1 && notify "Disconnected — free for the phone"
+}
+
+do_mic() {
+  local cur
+  cur=$(pactl list cards | awk -v c="$CARD" '$2==c{f=1} f&&/Active Profile/{print $3; exit}')
+  [ -z "$cur" ] && { notify "Not connected"; return 1; }
+  if [[ "$cur" == a2dp* ]]; then
+    pactl set-card-profile "$CARD" headset-head-unit-msbc 2>/dev/null || pactl set-card-profile "$CARD" headset-head-unit
+    route_audio
+    local src; src=$(pactl list short sources | awk -v p="bluez_input.$ID" 'index($2,p)==1{print $2; exit}')
+    [ -n "$src" ] && pactl set-default-source "$src"
+    notify "Call mode (mic on, lower quality)"
+  else
+    pactl set-card-profile "$CARD" a2dp-sink
+    route_audio
+    notify "Music mode (high quality)"
+  fi
+}
+
+do_watch() {
+  # only one watcher
+  exec 9>"${XDG_RUNTIME_DIR:-/tmp}/headphones-watch.lock"
+  flock -n 9 || exit 0
+  local had; had=$(sink)
+  pactl subscribe 2>/dev/null | grep --line-buffered -E "'(new|remove)' on sink #" | while read -r _; do
+    local now; now=$(sink)
+    if [ -n "$had" ] && [ -z "$now" ]; then
+      playerctl -a pause 2>/dev/null          # don't blast the laptop speakers
+      notify "Disconnected — media paused"
+    elif [ -z "$had" ] && [ -n "$now" ]; then
+      route_audio
+      notify "Connected — audio routed to headphones"
+    fi
+    had=$now
+  done
+}
+
+case "${1:-toggle}" in
+  toggle)     connected && do_disconnect || do_connect ;;
+  connect)    do_connect ;;
+  disconnect) do_disconnect ;;
+  mic)        do_mic ;;
+  watch)      do_watch ;;
+  status)     connected && echo connected || echo disconnected ;;
+  *)          sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac

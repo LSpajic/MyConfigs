@@ -31,7 +31,7 @@ exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
 exec --no-startup-id nm-applet
-exec_always --no-startup-id feh --bg-fill ~/Pictures/Wallpapers/wallpaper.jpg
+exec_always --no-startup-id feh --no-fehbg --bg-fill ~/Pictures/Wallpapers/wallpaper.jpg
 exec_always --no-startup-id setxkbmap -layout us,hr -option grp:win_space_toggle
 
 
@@ -230,3 +230,27 @@ exec --no-startup-id ~/.config/polybar/launch.sh
 # Prebacuje trenutni workspace na sljedeći monitor
 bindsym Mod4+Shift+p move workspace to output next
 
+
+#######################################################################
+# Slušalice (Sony WH-CH720N) - prebacivanje između mobitela i laptopa
+# skripta: ~/.local/bin/headphones (u myconfigs/scripts)
+#######################################################################
+set $hp ~/.local/bin/headphones
+
+# Mod4+b        spoji / odspoji slušalice (odspajanje ih oslobađa za mobitel)
+bindsym Mod4+b exec --no-startup-id $hp toggle
+# Mod4+Shift+b  prebaci između glazbe (A2DP) i poziva s mikrofonom (HFP)
+bindsym Mod4+Shift+b exec --no-startup-id $hp mic
+# Mod4+Ctrl+b   otvori Bluetooth manager
+bindsym Mod4+Ctrl+b exec --no-startup-id blueman-manager
+
+# Kad mobitel "ukrade" slušalice -> pauziraj (da ne svira na zvučnicima),
+# kad se vrate -> automatski prebaci zvuk na njih
+exec --no-startup-id $hp watch
+
+# Medijske tipke (laptop + gumbi na slušalicama)
+bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
+bindsym XF86AudioPause exec --no-startup-id playerctl play-pause
+bindsym XF86AudioNext exec --no-startup-id playerctl next
+bindsym XF86AudioPrev exec --no-startup-id playerctl previous
+bindsym XF86AudioStop exec --no-startup-id playerctl stop

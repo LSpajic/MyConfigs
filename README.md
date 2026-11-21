@@ -17,7 +17,7 @@ Each top-level folder is a **stow package** that mirrors `$HOME`:
 | `wallpaper` | `~/Pictures/Wallpapers/wallpaper.jpg`                 |
 | `vscode`    | VS Code `settings.json`                               |
 | `gh`, `glow`| CLI configs                                           |
-| `scripts`   | `~/.local/bin/eduroamCon.sh` (asks for credentials)   |
+| `scripts`   | `~/.local/bin/eduroamCon.sh` (asks for credentials), `headphones` (BT headphone switching, bound in i3) |
 
 ## Install
 
@@ -35,6 +35,7 @@ Other options:
 ./install.sh -y             # no prompts
 ./install.sh --unstow i3    # remove links
 ./install.sh --list
+./install.sh --login        # login screen (see below)
 ```
 
 Existing files that would be replaced are moved to `~/.myconfigs-backup/<timestamp>/`.
@@ -42,3 +43,13 @@ Missing programs are installed with `apt` (needs sudo) or, if that's not possibl
 
 Since the files in `$HOME` are symlinks into this repo, editing e.g. `~/.config/i3/config`
 edits the repo — just commit and push.
+
+## Login screen
+
+`./install.sh --login` (needs sudo) switches LightDM to `lightdm-gtk-greeter` with a custom
+gruvbox theme (`system/lightdm/`) that matches the wallpaper and polybar, and makes **i3 the
+default session**. Files are copied to `/usr/share/themes/MyConfigs-Greeter`,
+`/usr/share/backgrounds/myconfigs` and `/etc/lightdm/` (the greeter user can't read `$HOME`),
+so rerun it after changing the theme. Undo with `system/install-login.sh --uninstall`.
+
+Locked out? `Ctrl+Alt+F3`, log in, `sudo rm /etc/lightdm/lightdm.conf.d/90-myconfigs.conf && sudo systemctl restart lightdm`.
