@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Gruvbox lock screen: i3lock on a blurred, darkened copy of the wallpaper.
+# With i3lock-color (./install.sh --i3lock-color) it also gets a clock and a Gruvbox ring.
+#
+#   lock            lock now (used by xss-lock and $mod+Shift+x)
+#   lock --cache    only (re)build the blurred background, don't lock
+
+WALL=${LOCK_WALLPAPER:-$HOME/Pictures/Wallpapers/wallpaper.jpg}
+CACHE=${XDG_CACHE_HOME:-$HOME/.cache}/lock
+RES=$(xrandr --current 2>/dev/null | sed -n 's/.*current \([0-9]*\) x \([0-9]*\).*/\1x\2/p')
+RES=${RES:-1920x1080}
+IMG="$CACHE/bg-$RES.png"
+
+build() {
+  [ -r "$WALL" ] || return 1
+  [ -s "$IMG" ] && [ "$IMG" -nt "$WALL" ] && return 0
+  command -v convert >/dev/null || return 1
+  mkdir -p "$CACHE"
+  # cheap blur: shrink, blur, scale back up; then darken towards Gruvbox bg0
+  convert "$WALL" -resize "${RES}^" -gravity center -extent "$RES" \
+    -resize 12% -blur 0x3 -resize "${RES}!" \
+    -fill '#282828' -colorize 35% "$IMG.tmp.png" && mv "$IMG.tmp.png" "$IMG"
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+release_sleep_lock() {  # xss-lock passes this fd before suspend; closing it lets the laptop sleep
+  [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]] && exec {XSS_SLEEP_LOCK_FD}<&-
+}
+
+lock_i3lock() {
+  build
+  pgrep -xu "$EUID" i3lock >/dev/null && return 0     # already locked
+  local base=(--ignore-empty-password --show-failed-attempts)
+  [ -s "$IMG" ] && base+=(--image="$IMG") || base+=(--color=282828)
+  local args=("${base[@]}")
+  if i3lock --version 2>&1 | grep -qiE 'raymond|cassandra|\.c\.'; then
+    # i3lock-color: thin grey ring around the clock; yellow while typing, blue checking, red wrong
+    # (colours are rrggbbaa)
+    args+=(
+      --clock --indicator --radius=120 --ring-width=5
+      --inside-color=1d2021b3      --ring-color=50494599     --line-uses-inside
+      --insidever-color=1d2021cc   --ringver-color=83a598ff
+      --insidewrong-color=1d2021cc --ringwrong-color=fb4934ff
+      --keyhl-color=fabd2fff       --bshl-color=fe8019ff     --separator-color=00000000
+      --time-color=ebdbb2ff --date-color=a89984ff --layout-color=a89984ff
+      --verif-color=83a598ff --wrong-color=fb4934ff --modif-color=a89984ff
+      --time-str='%H:%M' --date-str='%A, %d %B'
+      --time-font='JetBrains Mono ExtraBold' --date-font='JetBrains Mono'
+      --verif-font='JetBrains Mono' --wrong-font='JetBrains Mono' --layout-font='JetBrains Mono'
+      --time-size=52 --date-size=15 --verif-size=18 --wrong-size=18
+      --verif-text='checking…' --wrong-text='wrong password' --noinput-text='empty'
+      --lock-text='locking…' --lockfailed-text='lock failed'
+      --pass-media-keys --pass-volume-keys --pass-screen-keys
+    )
+  fi
+  if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
+    i3lock "${args[@]}" {XSS_SLEEP_LOCK_FD}<&- || i3lock "${base[@]}" {XSS_SLEEP_LOCK_FD}<&- \
+      || i3lock --color=282828 {XSS_SLEEP_LOCK_FD}<&-
+    release_sleep_lock
+    while pgrep -xu "$EUID" i3lock >/dev/null; do sleep 0.5; done
+  else
+    # if an option is rejected, retry simpler so the screen never stays unlocked
+    i3lock --nofork "${args[@]}" || i3lock --nofork "${base[@]}" || i3lock --nofork --color=282828
+  fi
+}
+
+if [ "${1:-}" = --cache ]; then build; exit 0; fi
+
+have dunstctl && dunstctl set-paused true             # keep notifications for after unlock
+lock_i3lock
+have dunstctl && dunstctl set-paused false

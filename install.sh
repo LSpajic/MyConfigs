@@ -12,6 +12,7 @@
 #   ./install.sh --unstow [pkg]  # remove the symlinks again
 #   ./install.sh --list          # list packages
 #   ./install.sh --login         # themed LightDM login screen, i3 as default session (sudo)
+#   ./install.sh --i3lock-color  # build i3lock-color: clock + Gruvbox ring on the lock screen (sudo)
 
 set -uo pipefail
 
@@ -25,7 +26,7 @@ declare -A DEPS=(
   [zsh]="zsh git curl"
   [bash]="bash"
   [git]="git gh"
-  [i3]="i3 dex xss-lock i3lock nm-applet:network-manager-gnome feh setxkbmap:x11-xkb-utils xinput pactl:pulseaudio-utils brightnessctl rofi polybar playerctl blueman-manager:blueman"
+  [i3]="i3 dex xss-lock i3lock picom dunst nm-applet:network-manager-gnome feh setxkbmap:x11-xkb-utils xinput pactl:pulseaudio-utils brightnessctl rofi polybar playerctl blueman-manager:blueman"
   [polybar]="polybar xrandr:x11-xserver-utils jq i3-msg:i3 pactl:pulseaudio-utils wpctl:wireplumber brightnessctl"
   [rofi]="rofi"
   [ronema]="rofi nmcli:network-manager qrencode"
@@ -34,9 +35,11 @@ declare -A DEPS=(
   [vscode]="code"
   [gh]="gh"
   [glow]="glow::glow"
-  [scripts]="nmcli:network-manager bluetoothctl:bluez pactl:pulseaudio-utils playerctl notify-send:libnotify-bin flock:util-linux xterm xdotool vdirsyncer khal"
+  [scripts]="nmcli:network-manager bluetoothctl:bluez pactl:pulseaudio-utils playerctl notify-send:libnotify-bin flock:util-linux xterm xdotool vdirsyncer khal convert:imagemagick xrandr:x11-xserver-utils"
   [vdirsyncer]="vdirsyncer"
   [khal]="khal"
+  [dunst]="dunst dunstctl:dunst notify-send:libnotify-bin"
+  [picom]="picom"
 )
 # apt has no package for these -> brew only (or manual)
 declare -A NO_APT=([glow]=1 [code]=1)
@@ -60,8 +63,9 @@ for a in "$@"; do
     -y|--yes)   YES=1 ;;
     --unstow|-D) UNSTOW=1 ;;
     --login)    exec "$REPO/system/install-login.sh" ;;
+    --i3lock-color) exec "$REPO/system/install-i3lock-color.sh" ;;
     --list|-l)  printf '%s\n' "${!DEPS[@]}" | sort; exit 0 ;;
-    -h|--help)  sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*) echo "unknown option $a"; exit 1 ;;
     *)  [[ -n "${DEPS[$a]+x}" ]] || { echo "unknown package: $a (see --list)"; exit 1; }
         PKGS+=("$a") ;;
@@ -118,6 +122,10 @@ fi
 if [[ " ${PKGS[*]} " == *" rofi "* ]]; then
   if have fc-list && fc-list | grep -qi 'JetBrains Mono'; then ok "JetBrains Mono font"
   else err "JetBrains Mono font  (missing)"; EXTRA_MISSING+=(font); fi
+fi
+if [[ " ${PKGS[*]} " == *" scripts "* ]]; then
+  if i3lock --version 2>&1 | grep -qiE 'raymond|cassandra|\.c\.'; then ok "i3lock-color"
+  else warn "i3lock-color not installed (optional: lock screen clock/ring) - run ./install.sh --i3lock-color"; fi
 fi
 if [[ " ${PKGS[*]} " == *" ronema "* ]]; then
   have ronema && ok "ronema" || warn "ronema not found - install it manually (config is linked anyway)"

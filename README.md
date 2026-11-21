@@ -12,12 +12,14 @@ Each top-level folder is a **stow package** that mirrors `$HOME`:
 | `i3`        | `~/.config/i3/config`                                 |
 | `polybar`   | bar config, `launch.sh`, volume/brightness/workspace scripts |
 | `rofi`      | rofi config + gruvbox theme (`themes/gruvbox.rasi`)   |
+| `dunst`     | Gruvbox notifications (Mod4+\` history, Mod4+Shift+\` dismiss all) |
+| `picom`     | compositor: rounded corners, shadows, fades, dims unfocused windows |
 | `ronema`    | rofi network manager config, themes, icons            |
 | `x11`       | `.fehbg`                                              |
 | `wallpaper` | `~/Pictures/Wallpapers/wallpaper.jpg`                 |
 | `vscode`    | VS Code `settings.json`                               |
 | `gh`, `glow`| CLI configs                                           |
-| `scripts`   | `~/.local/bin/eduroamCon.sh` (asks for credentials), `headphones` (BT headphone switching, bound in i3), `wifi-menu` (rofi Wi-Fi picker: polybar click / Mod4+n) |
+| `scripts`   | `~/.local/bin/eduroamCon.sh` (asks for credentials), `headphones` (BT headphone switching, bound in i3), `wifi-menu` (rofi Wi-Fi picker: polybar click / Mod4+n), `lock` (i3lock on a blurred wallpaper, clock + ring with i3lock-color: Mod4+Shift+x, idle, suspend) |
 
 ## Install
 
@@ -36,6 +38,7 @@ Other options:
 ./install.sh --unstow i3    # remove links
 ./install.sh --list
 ./install.sh --login        # login screen (see below)
+./install.sh --i3lock-color # clock + Gruvbox ring on the lock screen (builds i3lock-color, sudo)
 ```
 
 Existing files that would be replaced are moved to `~/.myconfigs-backup/<timestamp>/`.

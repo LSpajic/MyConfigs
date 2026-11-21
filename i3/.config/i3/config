@@ -37,7 +37,9 @@ client.background       $bg0
 # XDG autostart .desktop files
 exec --no-startup-id dex --autostart --environment i3
 # lock the screen before suspend (loginctl lock-session to lock manually)
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork --color=282828
+exec --no-startup-id picom
+exec --no-startup-id ~/.local/bin/lock --cache
+exec --no-startup-id xss-lock --transfer-sleep-lock -- ~/.local/bin/lock
 exec --no-startup-id nm-applet
 exec --no-startup-id ~/.config/polybar/launch.sh
 # --no-fehbg: don't let feh rewrite the stowed ~/.fehbg
@@ -62,6 +64,11 @@ bindsym $mod+q kill
 bindsym $mod+n exec --no-startup-id ~/.local/bin/wifi-menu
 # drop-down calendar with Google events (also: right click the clock)
 bindsym $mod+c exec --no-startup-id ~/.local/bin/calendar
+bindsym $mod+Shift+x exec --no-startup-id ~/.local/bin/lock
+
+# notifications (dunst)
+bindsym $mod+grave       exec --no-startup-id dunstctl history-pop
+bindsym $mod+Shift+grave exec --no-startup-id dunstctl close-all
 
 # ═══════════════════════════════════════════════════════════════ audio / brightness
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
